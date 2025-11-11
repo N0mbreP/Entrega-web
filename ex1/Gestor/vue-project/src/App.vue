@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
+import TaskForm from './components/TaskForm.vue';
+import TaskList from './components/TaskList.vue';
 
 // Definimos las tareas reactivas
 const tasks = ref([
@@ -9,9 +11,6 @@ const tasks = ref([
   { id: 4, text: 'Tasca 4', completed: true },
   { id: 5, text: 'Tasca 5', completed: false },
 ]);
-
-// Para el nuevo texto de la tarea
-const newTaskText = ref('');
 
 // Para el filtro de mostrar solo pendientes
 const showPendingOnly = ref(false);
@@ -31,64 +30,45 @@ const totalTasks = computed(() => tasks.value.length);
 const pendingTasks = computed(() => tasks.value.filter(task => !task.completed).length);
 
 // Función para añadir una nueva tarea
-const addTask = () => {
-  if (newTaskText.value.trim() === '') {
-    return;
-  }
+function addTask(text) {
   const newId = tasks.value.length > 0 ? Math.max(...tasks.value.map(task => task.id)) + 1 : 1;
   tasks.value.push({
     id: newId,
-    text: newTaskText.value,
+    text,
     completed: false,
   });
-  newTaskText.value = ''; // Limpiar el input
-};
+}
 
 // Función para alternar el estado de completado de una tarea
-const toggleTaskStatus = (id) => {
+function toggleTaskStatus(id) {
   const task = tasks.value.find(task => task.id === id);
   if (task) {
     task.completed = !task.completed;
   }
-};
+}
 
 // Función para eliminar una tarea
-const deleteTask = (id) => {
+function deleteTask(id) {
   tasks.value = tasks.value.filter(task => task.id !== id);
-};
+}
 </script>
 
 <template>
   <div class="task-manager">
     <h1>Gestor de Tasques</h1>
 
-    <div class="input-section">
-      <input
-        type="text"
-        v-model="newTaskText"
-        @keyup.enter="addTask"
-        placeholder="Escriu una nova tasca"
-      />
-      <button @click="addTask">Afegir</button>
-    </div>
+    <TaskForm @add-task="addTask" />
 
     <div class="filter-section">
       <input type="checkbox" id="show-pending" v-model="showPendingOnly" />
       <label for="show-pending">Mostra només pendents</label>
     </div>
 
-    <ul class="task-list">
-      <li v-for="task in filteredTasks" :key="task.id" :class="{ completed: task.completed }">
-        <span class="task-text">{{ task.text }}</span>
-        <button
-          @click="toggleTaskStatus(task.id)"
-          :class="{ 'btn-mark': !task.completed, 'btn-unmark': task.completed }"
-        >
-          {{ task.completed ? 'Desmarcar' : 'Completar' }}
-        </button>
-        <button @click="deleteTask(task.id)" class="btn-delete">🗑️</button>
-      </li>
-    </ul>
+    <TaskList
+      :tasks="filteredTasks"
+      @toggle-task="toggleTaskStatus"
+      @delete-task="deleteTask"
+    />
 
     <div class="summary">
       Total: {{ totalTasks }} | Pendents: {{ pendingTasks }}
